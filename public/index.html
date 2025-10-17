@@ -27,11 +27,17 @@
         }
         #username::placeholder { color: #ffffff80; }
         #username:focus { box-shadow: 0 0 12px #00ffff; }
-        .button-container { display: flex; gap: 30px; }
-        button {
+        .flex-container { display: flex; gap: 30px; }
+        .btnLow {
             padding: 18px 38px; font-size: 26px; font-family: 'Caveat', cursive;
             border: none; border-radius: 10px; background-color: #0F52BA;
             color: white; cursor: pointer; transition: all 0.3s ease;
+        }
+        .btnHigh {
+            padding: 15px; font-size: 20px; font-family: 'Caveat', cursive;
+            border: none; border-radius: 10px; background-color: #0F52BA;
+            color: white; cursor: pointer; transition: all 0.3s ease; 
+            height:57px;
         }
         button:hover {
             background-color: #0c47a1; transform: scale(1.03);
@@ -47,26 +53,31 @@
 
     <header title="Welcome to JamSesh 🎶">JamSesh</header>
 
-    <div class="input-container">
-        <input type="text" id="username" placeholder="Enter your name to begin" maxlength="20">
+    <div class="flex-container">
+        <div class="input-container">
+            <input type="text" id="username" placeholder="Enter your name to begin" maxlength="20" float="left">
+        </div>
+        <button id="randNamBtn" class="btnHigh">Generate Random Name</button>
     </div>
-
-    <div class="button-container">
-        <button id="hostBtn" disabled>Host a Jam</button>
-        <button id="joinBtn" disabled>Join a Jam</button>
+    <div class="flex-container">
+        <button class="btnLow" id="hostBtn" disabled>Host a Jam</button>
+        <button class="btnLow" id="joinBtn" disabled>Join a Jam</button>
     </div>
 
     <script>
         const usernameInput = document.getElementById('username');
         const hostBtn = document.getElementById('hostBtn');
         const joinBtn = document.getElementById('joinBtn');
+        const randNamBtn = document.getElementById('randNamBtn');
 
-        usernameInput.addEventListener('input', () => {
+        const updateBtnStates = () => {
             const username = usernameInput.value.trim();
             const isEnabled = username.length > 0;
             hostBtn.disabled = !isEnabled;
             joinBtn.disabled = !isEnabled;
-        });
+        };
+
+        usernameInput.addEventListener('input', updateBtnStates);
 
         hostBtn.addEventListener('click', () => {
             const username = encodeURIComponent(usernameInput.value.trim());
@@ -77,6 +88,26 @@
             const username = encodeURIComponent(usernameInput.value.trim());
             window.location.href = `join.html?username=${username}`;
         });
+
+        const generateRandomName = () => {
+            const adjectives = ["Cool","Groovy","Funky","Electric","4ft","Smooth","Jazz","Karate","Digital","Synth"];
+            const nouns = ["Cat","Dog","Beat","Vibe","Solo","Riff","Maay","Crochet","Mixer","Loop"];
+            
+            const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+            const noun = nouns[Math.floor(Math.random() * nouns.length)];
+            const num = Math.floor(Math.random() * 999);
+            return `${adj}${noun}${num}`;
+        };
+
+        randNamBtn.addEventListener('click', () => {
+            usernameInput.value = generateRandomName();
+            updateBtnStates();
+        });
+
+        updateBtnStates();
+        randNamBtn.disabled = false;
+
     </script>
 </body>
 </html>
+
