@@ -97,6 +97,15 @@
     Room Code: <span id="room-code-display">Copy Code</span>
 </div>
 
+    <div id="chatContainer" style="position:fixed; right:12px; bottom:12px; width:320px; max-height:60vh; display:flex; flex-direction:column; box-shadow:0 2px 8px rgba(0,0,0,.2); background:#fff; border-radius:6px; overflow:hidden; font-family:Arial, sans-serif; z-index:9999;">
+     <div id="chatHeader" style="padding:8px 12px; background:#007bff; color:white; font-weight:600;">JamSesh Chat</div>
+     <div id="chatMessages" style="padding:8px; overflow:auto; flex:1; font-size:13px; background:#f8f9fb;"></div>
+     <form id="chatForm" style="display:flex; border-top:1px solid #eee;">
+        <input id="chatInput" autocomplete="off" placeholder="Type a message..." style="flex:1; border:0; padding:10px;" />
+        <button type="submit" style="border:0; background:#007bff; color:white; padding:10px 12px;">Send</button>
+     </form>
+    </div>
+
     <div class="main-container">
         <div class="session-container">
             <div class="audio-display">

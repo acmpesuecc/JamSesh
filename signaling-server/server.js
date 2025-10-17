@@ -51,7 +51,37 @@ wss.on('connection', (ws) => {
 
     ws.send(JSON.stringify({ type: 'init', clientId: clientId }));
 
-    ws.on('message', (message) => handleClientMessage(ws, message));
+    // ...existing code...
+    ws.on('message', function incoming(message) {
+        let data;
+        try {
+            data = JSON.parse(message);
+        } catch (e) {
+            // ignore non-json messages
+            return;
+        }
+
+        // Chat messages: broadcast to all clients
+        if (data.type === 'chat') {
+            const payload = JSON.stringify({
+                type: 'chat',
+                sender: data.sender || 'anonymous',
+                text: data.text || '',
+                ts: Date.now()
+            });
+            wss.clients.forEach(function each(client) {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(payload);
+                }
+            });
+            return;
+        }
+
+        // Delegate other message types to existing handler
+        handleClientMessage(ws, message);
+    });
+// ...existing code...
+
     ws.on('close', () => handleClientDisconnect(ws));
 });
 

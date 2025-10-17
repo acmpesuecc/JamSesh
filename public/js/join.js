@@ -36,6 +36,8 @@ let startCall = false;
 const iceServers = [];
 let allParticipants = [];
 
+let roomCode = null;
+
 const BITRATE_LEVELS = {
     HIGH: 192000,   // 192 kbps 
     MEDIUM: 96000, 
@@ -46,10 +48,14 @@ const ADAPTATION_INTERVAL_MS = 5000; // check network every 5 seconds
 //html references
 const remoteAudio = document.getElementById('remoteAudio');
 
+const startBtn = document.getElementById('startBtn');
+const endBtn = document.getElementById('endBtn');
+const exitBtn = document.getElementById('exitBtn');
+
 startBtn.disabled = true;
 
 const init = () => {
-    ws = new WebSocket("wss://jamsesh-8wui.onrender.com");
+    ws = new WebSocket("ws://localhost:8080");
     ws.onopen = () => {
         console.log("Websocket connected");
     };
@@ -93,6 +99,52 @@ const init = () => {
     });
 }
 
+// ...existing code...
+
+// add near the top (after existing const/let declarations)
+const localDisplayName = new URLSearchParams(window.location.search).get('username') || 'anonymous';
+
+function escapeHtml(s) {
+  if (!s) return '';
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+// ...existing code...
+// Replace the existing appendChat with the same function above (keep escapeHtml too)
+function appendChat(sender, text, ts) {
+  console.log('CHAT recv:', { sender, text, ts });
+  if ((typeof text === 'number' || /^\d{10,}$/.test(String(text))) && !ts) {
+    ts = Number(text);
+    text = '';
+  }
+  if (typeof text === 'object') text = JSON.stringify(text);
+  const msgs = document.getElementById('chatMessages');
+  if (!msgs) return;
+  const el = document.createElement('div');
+  el.style.marginBottom = '6px';
+  const timeStr = ts ? ` <span style="color:#666;font-size:11px">${new Date(Number(ts)).toLocaleTimeString()}</span>` : '';
+  el.innerHTML = `<strong>${escapeHtml(sender || 'anon')}</strong>${timeStr}: ${escapeHtml(text || '')}`;
+  msgs.appendChild(el);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+const chatForm = document.getElementById('chatForm');
+if (chatForm) {
+  chatForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = document.getElementById('chatInput');
+    const text = input && input.value && input.value.trim();
+    if (!text) return;
+    const payload = { type: 'chat', sender: localDisplayName, text };
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(payload));
+    } else {
+      console.warn('WebSocket not open; chat not sent');
+    }
+    appendChat('You', text, Date.now());
+    input.value = '';
+  });
+}
+
 async function handleSignalingMessage(event) {
 
     const data = JSON.parse(event.data);
@@ -101,7 +153,7 @@ async function handleSignalingMessage(event) {
             clientId = data.clientId;
             window.currentClientId = clientId; 
             const urlParams = new URLSearchParams(window.location.search);
-            const roomCode = urlParams.get('code');
+            roomCode = urlParams.get('code');
             const username = urlParams.get('username');
             ws.send(JSON.stringify({ type: 'joinroom', code: roomCode, from: clientId, username: username }));
             break;
@@ -189,6 +241,11 @@ async function handleSignalingMessage(event) {
                 console.warn(`ICE candidate received for unknown peer ${peerId} or no candidate data.`);
             }
             break;
+        }
+
+        case 'chat': {
+            appendChat(data.sender || 'anon', data.text || '', data.ts);
+        break;
         }
 
         case 'end-call':
@@ -374,5 +431,9 @@ function endCall() {
     console.log("Call ended and resources cleaned up.");
 }
 
-window.onload = init;
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
 });
